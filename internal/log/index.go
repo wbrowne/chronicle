@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"github.com/tysontate/gommap"
 	"io"
 	"os"
@@ -18,7 +19,8 @@ type index struct {
 	size uint64
 }
 
-func newIndex(f *os.File, c Config) (*index, error) {
+func newIndex(f *os.File, c *Config) (*index, error) {
+	fmt.Println("### New index created ###")
 	fi, err := f.Stat()
 	if err != nil {
 		return nil, err
@@ -44,26 +46,29 @@ func newIndex(f *os.File, c Config) (*index, error) {
 }
 
 // out represents the relative offset to the segments offset
-func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
-	if i.size == 0 {
+func (i *index) Read(in int64) (off uint32, pos uint64, err error) {
+	if i.size == 0 { // empty index
 		return 0, 0, io.EOF
 	}
 
 	if in == -1 {
-		out = uint32((i.size / entWidth) - 1)
+		off = uint32((i.size / entWidth) - 1)
 	} else {
-		out = uint32(in)
+		off = uint32(in)
 	}
 
-	pos = uint64(out) * entWidth
+	pos = uint64(off) * entWidth
+
+	fmt.Printf("Reading @ offset %d with position %d\n", off, pos)
+
 	if i.size < pos+entWidth {
 		return 0, 0, io.EOF
 	}
 
-	out = enc.Uint32(i.mmap[pos : pos+offWidth])
+	off = enc.Uint32(i.mmap[pos : pos+offWidth])
 	pos = enc.Uint64(i.mmap[pos+offWidth : pos+entWidth])
 
-	return out, pos, nil
+	return off, pos, nil
 }
 
 func (i *index) Write(off uint32, pos uint64) error {
