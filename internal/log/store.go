@@ -12,19 +12,18 @@ var (
 )
 
 const (
-	lenWidth = 8
+	lenWidth = 8 // record length (bytes)
 )
 
-// The file where Records are stored
 type store struct {
-	file *os.File
 	mu   sync.Mutex
+	file *os.File
 	buf  *bufio.Writer
 	size uint64
 }
 
 func newStore(f *os.File) (*store, error) {
-	fi, err := os.Stat(f.Name())
+	fi, err := f.Stat()
 
 	if err != nil {
 		return nil, err
@@ -61,7 +60,7 @@ func (s *store) ReadAt(pos uint64) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Flush to disk in case we haven't yet
+	// flush to disk in case we haven't yet
 	if err := s.buf.Flush(); err != nil {
 		return nil, err
 	}

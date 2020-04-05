@@ -19,20 +19,19 @@ type index struct {
 }
 
 func newIndex(f *os.File, c Config) (*index, error) {
-	idx := &index{
-		file: f,
-	}
-
-	fi, err := os.Stat(f.Name())
+	fi, err := f.Stat()
 	if err != nil {
 		return nil, err
 	}
-	idx.size = uint64(fi.Size())
 
 	if err = os.Truncate(f.Name(), int64(c.Segment.MaxIndexBytes)); err != nil {
 		return nil, err
 	}
 
+	idx := &index{
+		file: f,
+		size: uint64(fi.Size()),
+	}
 	if idx.mmap, err = gommap.Map(
 		idx.file.Fd(),
 		gommap.PROT_READ|gommap.PROT_WRITE,
@@ -40,6 +39,7 @@ func newIndex(f *os.File, c Config) (*index, error) {
 	); err != nil {
 		return nil, err
 	}
+
 	return idx, nil
 }
 
@@ -93,5 +93,6 @@ func (i *index) Close() error {
 	if err := i.file.Truncate(int64(i.size)); err != nil {
 		return err
 	}
+
 	return i.file.Close()
 }
