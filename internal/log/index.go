@@ -52,6 +52,7 @@ func (i *index) Read(in int64) (off uint32, pos uint64, err error) {
 	}
 
 	if in == -1 {
+		fmt.Printf("Current size = %d\n", i.size)
 		off = uint32((i.size / entWidth) - 1)
 	} else {
 		off = uint32(in)
@@ -75,6 +76,7 @@ func (i *index) Write(off uint32, pos uint64) error {
 	if uint64(len(i.mmap)) < i.size+entWidth {
 		return io.EOF
 	}
+
 	enc.PutUint32(i.mmap[i.size:i.size+offWidth], off)
 	enc.PutUint64(i.mmap[i.size+offWidth:i.size+entWidth], pos)
 	i.size += uint64(entWidth)
@@ -91,6 +93,7 @@ func (i *index) Close() error {
 	if err := i.mmap.Sync(gommap.MS_SYNC); err != nil {
 		return err
 	}
+
 	// ensure flushed to disk
 	if err := i.file.Sync(); err != nil {
 		return err

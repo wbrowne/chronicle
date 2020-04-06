@@ -81,3 +81,20 @@ func (s *store) ReadAt(pos uint64) ([]byte, error) {
 
 	return b, nil
 }
+
+func (i *store) Close() error {
+	// ensure buffer is flushed
+	if err := i.buf.Flush(); err != nil {
+		return err
+	}
+
+	// ensure flushed to disk
+	if err := i.file.Sync(); err != nil {
+		return err
+	}
+	if err := i.file.Truncate(int64(i.size)); err != nil {
+		return err
+	}
+
+	return i.file.Close()
+}
