@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -10,7 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	api "github.com/wbrowne/chronicle/api/v1")
+	api "github.com/wbrowne/chronicle/api/v1"
+)
 
 type Log struct {
 	mu sync.RWMutex
@@ -99,14 +99,14 @@ func (l *Log) Read(off uint64) (*api.Record, error) {
 	defer l.mu.RUnlock()
 
 	var s *segment
-	for _, segment := range l.segments {// find segment with record
+	for _, segment := range l.segments { // find segment with record
 		if segment.baseOffset <= off {
 			s = segment
 			break
 		}
 	}
 	if s == nil || s.nextOffset <= off {
-		return nil, fmt.Errorf("offset out of range: %d", off)
+		return nil, api.ErrOffsetOutOfRange{Offset: off}
 	}
 
 	return s.Read(off)
