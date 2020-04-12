@@ -2,13 +2,17 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	api "github.com/wbrowne/chronicle/api/v1"
+	sec "github.com/wbrowne/chronicle/internal/conf"
 	"github.com/wbrowne/chronicle/internal/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"io/ioutil"
 	"net"
+	"os"
 	"testing"
 )
 
@@ -33,16 +37,38 @@ func TestServer(t *testing.T) {
 func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Config, teardown func()) {
 	t.Helper()
 
-	// create listener on local network and connect
-	l, err := net.Listen("tcp", ":0")
+	l, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	clientOptions := []grpc.DialOption{grpc.WithInsecure()}
-	cc, err := grpc.Dial(l.Addr().String(), clientOptions...)
+	tlsConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
+		CertFile: sec.RootClientCertFile,
+		KeyFile:  sec.RootClientKeyFile,
+		CAFile:   sec.CAFile,
+		Server:   false,
+	})
 	require.NoError(t, err)
+
+	tlsCreds := credentials.NewTLS(tlsConfig)
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(tlsCreds)}
+	cc, err := grpc.Dial(l.Addr().String(), opts...)
+
+	require.NoError(t, err)
+
+	client = api.NewLogClient(cc)
+
+	serverTLSConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
+		CertFile:      sec.ServerCertFile,
+		KeyFile:       sec.ServerKeyFile,
+		CAFile:        sec.CAFile,
+		ServerAddress: l.Addr().String(),
+		Server:        true,
+	})
+	require.NoError(t, err)
+	serverCreds := credentials.NewTLS(serverTLSConfig)
 
 	dir, err := ioutil.TempDir("", "server_test")
 	require.NoError(t, err)
+	defer os.RemoveAll(dir)
 
 	clog, err := log.NewLog(dir, &log.Config{})
 	require.NoError(t, err)
@@ -53,15 +79,16 @@ func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Co
 	if fn != nil {
 		fn(config)
 	}
-	server, err := NewGRPCServer(config)
+	server, err := NewGRPCServer(config, grpc.Creds(serverCreds))
 	require.NoError(t, err)
 
 	// goroutine since .Serve is blocking
 	go func() {
-		server.Serve(l)
+		if err := server.Serve(l); err != nil {
+			fmt.Errorf("failed to serve: %s", err)
+		}
 	}()
 
-	client = api.NewLogClient(cc)
 	return client, config, func() {
 		server.Stop()
 		cc.Close()

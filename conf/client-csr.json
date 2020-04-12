@@ -1,0 +1,17 @@
+{
+  "CN": "client",
+  "hosts": [""],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "DE",
+      "L": "BE",
+      "ST": "Berlin",
+      "O": "wbrowne",
+      "OU": "Chronicle Services"
+    }
+  ]
+}

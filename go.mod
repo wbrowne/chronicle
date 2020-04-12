@@ -3,6 +3,7 @@ module github.com/wbrowne/chronicle
 go 1.13
 
 require (
+	github.com/cloudflare/cfssl v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.5
 	github.com/stretchr/testify v1.5.1
