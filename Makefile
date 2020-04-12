@@ -1,4 +1,4 @@
-CONFIG_PATH=${HOME}/dev/.chronicle/
+CONFIG_PATH=${HOME}/dev/.chronicle
 
 .PHONY: init
 init:
@@ -6,6 +6,8 @@ init:
 
 .PHONY: test
 test:
+
+test: $(CONFIG_PATH)/policy.csv $(CONFIG_PATH)/model.conf
 	go test -race ./...
 
 .PHONY: compile
@@ -58,3 +60,9 @@ gencert:
 		conf/client-csr.json | cfssljson -bare nobody-client
 
 	mv *.pem *.csr ${CONFIG_PATH}
+
+$(CONFIG_PATH)/model.conf:
+	cp conf/model.conf $(CONFIG_PATH)/model.conf
+
+$(CONFIG_PATH)/policy.csv:
+	cp conf/policy.csv $(CONFIG_PATH)/policy.csv
