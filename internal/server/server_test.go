@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	api "github.com/wbrowne/chronicle/api/v1"
+	"github.com/wbrowne/chronicle/internal/auth"
 	sec "github.com/wbrowne/chronicle/internal/conf"
 	"github.com/wbrowne/chronicle/internal/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"io/ioutil"
@@ -26,6 +28,7 @@ func TestServer(t *testing.T) {
 		"produce/consume a message to/from the log succeeds": testProduceConsume,
 		"produce/consume stream succeeds":                    testProduceConsumeStream,
 		"consume past log boundary fails":                    testConsumePastBoundary,
+		"unauthorized client produce fails":                  testUnauthorized,
 	} {
 		t.Run(scenario, func(t *testing.T) {
 			rootClient, nobodyClient, config, teardown := testSetup(t, nil)
@@ -50,8 +53,12 @@ func testSetup(t *testing.T, fn func(*Config)) (rootClient, nobodyClient api.Log
 	clog, err := log.NewLog(dir, &log.Config{})
 	require.NoError(t, err)
 
+	authorizer := auth.New(sec.ACLModelFile, sec.ACLPolicyFile)
+	require.NoError(t, err)
+
 	config = &Config{
 		CommitLog: clog,
+		Authorizer: authorizer,
 	}
 	if fn != nil {
 		fn(config)
@@ -178,6 +185,35 @@ func testProduceConsumeStream(t *testing.T, client, _ api.LogClient, config *Con
 			require.Equal(t, res.Record.Value, record.Value)
 			require.Equal(t, res.Record.Offset, record.Offset)
 		}
+	}
+}
+
+func testUnauthorized(t *testing.T, _, client api.LogClient, config *Config, ) {
+	ctx := context.Background()
+	produce, err := client.Produce(context.Background(),
+		&api.ProduceRequest{
+			Record: &api.Record{
+				Value: []byte("hello world"),
+			},
+		},
+	)
+	if produce != nil {
+		t.Fatalf("produce response should be nil")
+	}
+	gotCode, wantCode := status.Code(err), codes.PermissionDenied
+	if gotCode != wantCode {
+		t.Fatalf("got code: %d, want: %d", gotCode, wantCode)
+	}
+
+	consume, err := client.Consume(ctx, &api.ConsumeRequest{
+		Offset: 0,
+	})
+	if consume != nil {
+		t.Fatalf("consume response should be nil")
+	}
+	gotCode, wantCode = status.Code(err), codes.PermissionDenied
+	if gotCode != wantCode {
+		t.Fatalf("got code: %d, want: %d", gotCode, wantCode)
 	}
 }
 

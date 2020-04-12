@@ -2,18 +2,32 @@ package server
 
 import (
 	"context"
-	api "github.com/wbrowne/chronicle/api/v1"
+	. "github.com/grpc-ecosystem/go-grpc-middleware"
+	. "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
+
+	api "github.com/wbrowne/chronicle/api/v1"
 )
 
 var _ api.LogServer = (*grpcServer)(nil)
+
+const (
+	objectWildcard = "*"
+	produceAction  = "produce"
+	consumeAction  = "consume"
+)
 
 type grpcServer struct {
 	*Config
 }
 
 type Config struct {
-	CommitLog CommitLog
+	CommitLog  CommitLog
+	Authorizer Authorizer
 }
 
 type CommitLog interface {
@@ -22,7 +36,15 @@ type CommitLog interface {
 	Read(uint64) (*api.Record, error)
 }
 
+type Authorizer interface {
+	Authorize(subject, object, action string) error
+}
+
 func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (*grpc.Server, error) {
+	opts = append(opts, grpc.StreamInterceptor(
+		ChainStreamServer(StreamServerInterceptor(authenticate))),
+		grpc.UnaryInterceptor(ChainUnaryServer(UnaryServerInterceptor(authenticate))),
+	)
 	gsrv := grpc.NewServer(opts...)
 	srv, err := newGrpcServer(config)
 	if err != nil {
@@ -40,6 +62,10 @@ func newGrpcServer(config *Config) (srv *grpcServer, err error) {
 }
 
 func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (*api.ProduceResponse, error) {
+	if err := s.authorize(ctx, produceAction); err != nil {
+		return nil, err
+	}
+
 	offset, err := s.CommitLog.Append(req.Record)
 	if err != nil {
 		return nil, err
@@ -48,6 +74,10 @@ func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (*api
 }
 
 func (s *grpcServer) Consume(ctx context.Context, req *api.ConsumeRequest) (*api.ConsumeResponse, error) {
+	if err := s.authorize(ctx, consumeAction); err != nil {
+		return nil, err
+	}
+
 	record, err := s.CommitLog.Read(req.Offset)
 	if err != nil {
 		return nil, err
@@ -55,7 +85,7 @@ func (s *grpcServer) Consume(ctx context.Context, req *api.ConsumeRequest) (*api
 	return &api.ConsumeResponse{Record: record}, nil
 }
 
-// bidirectional streaming RPC so the client can stream data into the server’s log
+// bi-directional streaming RPC so the client can stream data into the server’s log
 // and the server can tell the client whether each request succeeded
 func (s *grpcServer) ProduceStream(stream api.Log_ProduceStreamServer) error {
 	for {
@@ -96,3 +126,43 @@ func (s *grpcServer) ConsumeStream(req *api.ConsumeRequest, stream api.Log_Consu
 		}
 	}
 }
+
+func (s *grpcServer) authorize(ctx context.Context, action string) error {
+	if err := s.Authorizer.Authorize(
+		subject(ctx),
+		objectWildcard,
+		action,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+// auth middleware
+func authenticate(ctx context.Context) (context.Context, error) {
+	p, ok := peer.FromContext(ctx)
+	if !ok {
+		return ctx, status.New(
+			codes.Unknown,
+			"couldn't find peer info",
+		).Err()
+	}
+	if p.AuthInfo == nil {
+		return ctx, status.New(
+			codes.Unauthenticated,
+			"no transport security being used",
+		).Err()
+	}
+
+	tlsInfo := p.AuthInfo.(credentials.TLSInfo)
+	subject := tlsInfo.State.VerifiedChains[0][0].Subject.CommonName
+	ctx = context.WithValue(ctx, subjectContextKey{}, subject)
+
+	return ctx, nil
+}
+
+func subject(ctx context.Context) string {
+	return ctx.Value(subjectContextKey{}).(string)
+}
+
+type subjectContextKey struct{}
