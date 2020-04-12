@@ -47,13 +47,11 @@ func newSegment(dir string, baseOffset uint64, c *Config) (*segment, error) {
 		return nil, err
 	}
 
-	//  if the index is empty, then the next record appended to the segment
+	// if the index is empty, then the next record appended to the segment
 	// would be the first record and its offset would be the segment’s base offset
 	if off, _, err := s.index.Read(-1); err != nil {
-		fmt.Printf("Starting fresh?\n")
 		s.nextOffset = baseOffset
 	} else {
-		fmt.Printf("Continuing from?\n")
 		s.nextOffset = baseOffset + uint64(off) + 1
 	}
 
@@ -117,11 +115,11 @@ func (s *segment) Remove() error {
 		return err
 	}
 
-	if err := os.Remove(s.index.file.Name()) ; err!= nil {
+	if err := os.Remove(s.index.file.Name()); err != nil {
 		return err
 	}
 
-	if err := os.Remove(s.store.file.Name()) ; err!= nil {
+	if err := os.Remove(s.store.file.Name()); err != nil {
 		return err
 	}
 
