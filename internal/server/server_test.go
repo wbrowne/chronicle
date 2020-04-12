@@ -14,6 +14,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestServer(t *testing.T) {
@@ -40,31 +41,7 @@ func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Co
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
-	tlsConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
-		CertFile: sec.RootClientCertFile,
-		KeyFile:  sec.RootClientKeyFile,
-		CAFile:   sec.CAFile,
-		Server:   false,
-	})
-	require.NoError(t, err)
-
-	tlsCreds := credentials.NewTLS(tlsConfig)
-	opts := []grpc.DialOption{grpc.WithTransportCredentials(tlsCreds)}
-	cc, err := grpc.Dial(l.Addr().String(), opts...)
-
-	require.NoError(t, err)
-
-	client = api.NewLogClient(cc)
-
-	serverTLSConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
-		CertFile:      sec.ServerCertFile,
-		KeyFile:       sec.ServerKeyFile,
-		CAFile:        sec.CAFile,
-		ServerAddress: l.Addr().String(),
-		Server:        true,
-	})
-	require.NoError(t, err)
-	serverCreds := credentials.NewTLS(serverTLSConfig)
+	// setup server
 
 	dir, err := ioutil.TempDir("", "server_test")
 	require.NoError(t, err)
@@ -79,6 +56,17 @@ func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Co
 	if fn != nil {
 		fn(config)
 	}
+
+	serverTLSConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
+		CertFile:      sec.ServerCertFile,
+		KeyFile:       sec.ServerKeyFile,
+		CAFile:        sec.CAFile,
+		ServerAddress: l.Addr().String(),
+		Server:        true,
+	})
+	require.NoError(t, err)
+
+	serverCreds := credentials.NewTLS(serverTLSConfig)
 	server, err := NewGRPCServer(config, grpc.Creds(serverCreds))
 	require.NoError(t, err)
 
@@ -88,6 +76,25 @@ func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Co
 			fmt.Errorf("failed to serve: %s", err)
 		}
 	}()
+
+	// setup client
+	clientTLSConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
+		CertFile: sec.RootClientCertFile,
+		KeyFile:  sec.RootClientKeyFile,
+		CAFile:   sec.CAFile,
+		Server:   false,
+	})
+	require.NoError(t, err)
+
+	// setup timeout for client connection
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	clientCreds := credentials.NewTLS(clientTLSConfig)
+	cc, err := grpc.DialContext(ctx, l.Addr().String(), grpc.WithTransportCredentials(clientCreds), grpc.WithBlock())
+	require.NoError(t, err)
+
+	client = api.NewLogClient(cc)
 
 	return client, config, func() {
 		server.Stop()
