@@ -20,7 +20,7 @@ import (
 func TestServer(t *testing.T) {
 	for scenario, fn := range map[string]func(
 		t *testing.T,
-		client api.LogClient,
+		rootClient, nobodyClient api.LogClient,
 		config *Config,
 	){
 		"produce/consume a message to/from the log succeeds": testProduceConsume,
@@ -28,17 +28,17 @@ func TestServer(t *testing.T) {
 		"consume past log boundary fails":                    testConsumePastBoundary,
 	} {
 		t.Run(scenario, func(t *testing.T) {
-			client, config, teardown := testSetup(t, nil)
+			rootClient, nobodyClient, config, teardown := testSetup(t, nil)
 			defer teardown()
-			fn(t, client, config)
+			fn(t, rootClient, nobodyClient, config)
 		})
 	}
 }
 
-func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Config, teardown func()) {
+func testSetup(t *testing.T, fn func(*Config)) (rootClient, nobodyClient api.LogClient, config *Config, teardown func()) {
 	t.Helper()
 
-	l, err := net.Listen("tcp", "127.0.0.1:0")
+	network, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 
 	// setup server
@@ -61,7 +61,7 @@ func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Co
 		CertFile:      sec.ServerCertFile,
 		KeyFile:       sec.ServerKeyFile,
 		CAFile:        sec.CAFile,
-		ServerAddress: l.Addr().String(),
+		ServerAddress: network.Addr().String(),
 		Server:        true,
 	})
 	require.NoError(t, err)
@@ -72,38 +72,25 @@ func testSetup(t *testing.T, fn func(*Config)) (client api.LogClient, config *Co
 
 	// goroutine since .Serve is blocking
 	go func() {
-		if err := server.Serve(l); err != nil {
+		if err := server.Serve(network); err != nil {
 			fmt.Errorf("failed to serve: %s", err)
 		}
 	}()
 
-	// setup client
-	clientTLSConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
-		CertFile: sec.RootClientCertFile,
-		KeyFile:  sec.RootClientKeyFile,
-		CAFile:   sec.CAFile,
-		Server:   false,
-	})
-	require.NoError(t, err)
+	// setup clients
+	rootConn, rootClient := newClient(t, network.Addr().String(), sec.RootClientCertFile, sec.RootClientKeyFile)
 
-	// setup timeout for client connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	nobodyConn, nobodyClient := newClient(t, network.Addr().String(), sec.NobodyClientCertFile, sec.NobodyClientKeyFile)
 
-	clientCreds := credentials.NewTLS(clientTLSConfig)
-	cc, err := grpc.DialContext(ctx, l.Addr().String(), grpc.WithTransportCredentials(clientCreds), grpc.WithBlock())
-	require.NoError(t, err)
-
-	client = api.NewLogClient(cc)
-
-	return client, config, func() {
+	return rootClient, nobodyClient, config, func() {
 		server.Stop()
-		cc.Close()
-		l.Close()
+		rootConn.Close()
+		nobodyConn.Close()
+		network.Close()
 	}
 }
 
-func testProduceConsume(t *testing.T, client api.LogClient, config *Config) {
+func testProduceConsume(t *testing.T, client, _ api.LogClient, config *Config) {
 	ctx := context.Background()
 	want := &api.Record{
 		Value: []byte("hello world"),
@@ -125,7 +112,7 @@ func testProduceConsume(t *testing.T, client api.LogClient, config *Config) {
 	require.Equal(t, want.Offset, consume.Record.Offset)
 }
 
-func testConsumePastBoundary(t *testing.T, client api.LogClient, config *Config) {
+func testConsumePastBoundary(t *testing.T, client, _ api.LogClient, config *Config) {
 	ctx := context.Background()
 	produce, err := client.Produce(ctx, &api.ProduceRequest{
 		Record: &api.Record{
@@ -147,7 +134,7 @@ func testConsumePastBoundary(t *testing.T, client api.LogClient, config *Config)
 	}
 }
 
-func testProduceConsumeStream(t *testing.T, client api.LogClient, config *Config) {
+func testProduceConsumeStream(t *testing.T, client, _ api.LogClient, config *Config) {
 	ctx := context.Background()
 	records := []*api.Record{
 		{
@@ -192,4 +179,27 @@ func testProduceConsumeStream(t *testing.T, client api.LogClient, config *Config
 			require.Equal(t, res.Record.Offset, record.Offset)
 		}
 	}
+}
+
+func newClient(t *testing.T, srvAdr, crtPath, keyPath string) (
+	*grpc.ClientConn,
+	api.LogClient,
+) {
+	tlsConfig, err := sec.SetupTLSConfig(sec.TLSConfig{
+		CertFile: crtPath,
+		KeyFile:  keyPath,
+		CAFile:   sec.CAFile,
+		Server:   false,
+	})
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	tlsCreds := credentials.NewTLS(tlsConfig)
+	conn, err := grpc.DialContext(ctx, srvAdr, grpc.WithTransportCredentials(tlsCreds), grpc.WithBlock())
+	require.NoError(t, err)
+
+	client := api.NewLogClient(conn)
+	return conn, client
 }

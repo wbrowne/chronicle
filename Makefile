@@ -48,4 +48,13 @@ gencert:
 		-cn="root" \
 		conf/client-csr.json | cfssljson -bare root-client
 
+	# Nobody Client
+	cfssl gencert \
+		-ca=ca.pem \
+		-ca-key=ca-key.pem \
+		-config=conf/ca-config.json \
+		-profile=client \
+		-cn="nobody" \
+		conf/client-csr.json | cfssljson -bare nobody-client
+
 	mv *.pem *.csr ${CONFIG_PATH}
