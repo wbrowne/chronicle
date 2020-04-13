@@ -1,11 +1,12 @@
 package log
 
 import (
-	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	api "github.com/wbrowne/chronicle/api/v1"
 )

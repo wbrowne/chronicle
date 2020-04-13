@@ -3,20 +3,22 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	api "github.com/wbrowne/chronicle/api/v1"
-	"github.com/wbrowne/chronicle/internal/auth"
-	sec "github.com/wbrowne/chronicle/internal/conf"
-	"github.com/wbrowne/chronicle/internal/log"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
 	"io/ioutil"
 	"net"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
+
+	api "github.com/wbrowne/chronicle/api/v1"
+	"github.com/wbrowne/chronicle/internal/auth"
+	sec "github.com/wbrowne/chronicle/internal/conf"
+	"github.com/wbrowne/chronicle/internal/log"
 )
 
 func TestServer(t *testing.T) {
@@ -57,7 +59,7 @@ func testSetup(t *testing.T, fn func(*Config)) (rootClient, nobodyClient api.Log
 	require.NoError(t, err)
 
 	config = &Config{
-		CommitLog: clog,
+		CommitLog:  clog,
 		Authorizer: authorizer,
 	}
 	if fn != nil {

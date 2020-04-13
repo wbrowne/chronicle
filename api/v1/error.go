@@ -2,6 +2,7 @@ package log_v1
 
 import (
 	"fmt"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/status"
 )

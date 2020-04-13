@@ -2,9 +2,10 @@ package log
 
 import (
 	"fmt"
-	"github.com/tysontate/gommap"
 	"io"
 	"os"
+
+	"github.com/tysontate/gommap"
 )
 
 var (

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+
 	"github.com/casbin/casbin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

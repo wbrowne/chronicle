@@ -2,9 +2,10 @@ package log
 
 import (
 	"fmt"
-	"github.com/gogo/protobuf/proto"
 	"os"
 	"path"
+
+	"github.com/gogo/protobuf/proto"
 
 	api "github.com/wbrowne/chronicle/api/v1"
 )
