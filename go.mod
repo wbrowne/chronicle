@@ -7,6 +7,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.5
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
+	github.com/hashicorp/raft v1.1.2 // indirect
 	github.com/hashicorp/serf v0.8.5
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
