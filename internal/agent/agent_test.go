@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 
 	api "github.com/wbrowne/chronicle/api/v1"
 	"github.com/wbrowne/chronicle/internal/agent"
@@ -93,6 +94,19 @@ func TestAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, consumeResponse.Record.Value, recordVal)
 	require.Equal(t, consumeResponse.Record.Offset, produceResponse.Offset)
+
+	// verify no more logs produced
+	consumeResponse, err = leaderClient.Consume(
+		context.Background(),
+		&api.ConsumeRequest{
+			Offset: produceResponse.Offset + 1,
+		},
+	)
+	require.Nil(t, consumeResponse)
+	require.Error(t, err)
+	got := status.Code(err)
+	want := status.Code(api.ErrOffsetOutOfRange{}.GRPCStatus().Err())
+	require.Equal(t, got, want)
 }
 
 func createAgent(t *testing.T, serverTLSConfig, peerTLSConfig *tls.Config, id, agentAdr string) *agent.Agent {

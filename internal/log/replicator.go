@@ -74,9 +74,9 @@ func (r *Replicator) join(addr string, leave chan struct{}) {
 	// consume all logs and produce to local server
 	for {
 		select {
-		case <-r.close:// failure
+		case <-r.close: // failure
 			return
-		case <-leave:// leaves cluster
+		case <-leave: // leaves cluster
 			return
 		case record := <-records:
 			_, err = r.LocalServer.Produce(ctx,
