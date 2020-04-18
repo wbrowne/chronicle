@@ -18,7 +18,7 @@ const (
 
 type store struct {
 	mu   sync.Mutex
-	file *os.File
+	*os.File
 	buf  *bufio.Writer
 	size uint64
 }
@@ -31,7 +31,7 @@ func newStore(f *os.File) (*store, error) {
 	}
 
 	return &store{
-		file: f,
+		File: f,
 		buf:  bufio.NewWriter(f),
 		size: uint64(fi.Size()),
 	}, nil
@@ -69,32 +69,32 @@ func (s *store) ReadAt(pos uint64) ([]byte, error) {
 
 	size := make([]byte, lenWidth)
 	fmt.Printf("Reading %d bytes (0x%x)\n", len(size), string(size))
-	if _, err := s.file.ReadAt(size, int64(pos)); err != nil {
+	if _, err := s.File.ReadAt(size, int64(pos)); err != nil {
 		return nil, err
 	}
 
 	b := make([]byte, enc.Uint64(size))
 	fmt.Printf("Reading %d bytes (0x%x)\n", len(b), string(b))
-	if _, err := s.file.ReadAt(b, int64(pos+lenWidth)); err != nil {
+	if _, err := s.File.ReadAt(b, int64(pos+lenWidth)); err != nil {
 		return nil, err
 	}
 
 	return b, nil
 }
 
-func (i *store) Close() error {
+func (s *store) Close() error {
 	// ensure buffer is flushed
-	if err := i.buf.Flush(); err != nil {
+	if err := s.buf.Flush(); err != nil {
 		return err
 	}
 
 	// ensure flushed to disk
-	if err := i.file.Sync(); err != nil {
+	if err := s.File.Sync(); err != nil {
 		return err
 	}
-	if err := i.file.Truncate(int64(i.size)); err != nil {
+	if err := s.File.Truncate(int64(s.size)); err != nil {
 		return err
 	}
 
-	return i.file.Close()
+	return s.File.Close()
 }

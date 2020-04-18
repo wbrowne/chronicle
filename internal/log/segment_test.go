@@ -22,6 +22,7 @@ func TestSegment(t *testing.T) {
 			MaxStoreBytes: 1024,
 			MaxIndexBytes: entWidth * 3,
 		},
+		Raft{},
 	}
 
 	s, err := newSegment(dir, 16, c)
@@ -51,6 +52,7 @@ func TestSegment(t *testing.T) {
 			MaxStoreBytes: uint64(len(want.Value) * 3),
 			MaxIndexBytes: 1024,
 		},
+		Raft{},
 	}
 	s, err = newSegment(dir, 16, c)
 	require.NoError(t, err)

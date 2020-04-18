@@ -21,7 +21,7 @@ func TestLog(t *testing.T) {
 			require.NoError(t, err)
 			defer os.RemoveAll(dir)
 
-			log, err := NewLog(dir, &Config{Segment{MaxStoreBytes: 32}})
+			log, err := NewLog(dir, &Config{Segment{MaxStoreBytes: 32}, Raft{}})
 			require.NoError(t, err)
 
 			fn(t, log)

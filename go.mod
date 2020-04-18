@@ -7,10 +7,12 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.5
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
-	github.com/hashicorp/raft v1.1.2 // indirect
+	github.com/hashicorp/raft v1.1.2
+	github.com/hashicorp/raft-boltdb v0.0.0-20191021154308-4207f1bf0617
 	github.com/hashicorp/serf v0.8.5
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
+	github.com/soheilhy/cmux v0.1.4
 	github.com/stretchr/testify v1.5.1
 	github.com/tysontate/gommap v0.0.0-20190103205956-899e1273fb5c
 	golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3 // indirect

@@ -60,6 +60,8 @@ func newSegment(dir string, baseOffset uint64, c *Config) (*segment, error) {
 }
 
 func (s *segment) Append(record *api.Record) (offset uint64, err error) {
+	record.Offset = s.nextOffset
+
 	p, err := proto.Marshal(record)
 	if err != nil {
 		return 0, err
@@ -86,7 +88,6 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 
 func (s *segment) Read(off uint64) (*api.Record, error) {
 	_, pos, err := s.index.Read(int64(off - s.baseOffset))
-
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +95,8 @@ func (s *segment) Read(off uint64) (*api.Record, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	record := &api.Record{}
 	err = proto.Unmarshal(p, record)
-
 	return record, err
 }
 
@@ -116,11 +115,11 @@ func (s *segment) Remove() error {
 		return err
 	}
 
-	if err := os.Remove(s.index.file.Name()); err != nil {
+	if err := os.Remove(s.index.Name()); err != nil {
 		return err
 	}
 
-	if err := os.Remove(s.store.file.Name()); err != nil {
+	if err := os.Remove(s.store.Name()); err != nil {
 		return err
 	}
 

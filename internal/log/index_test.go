@@ -18,6 +18,7 @@ func TestIndex(t *testing.T) {
 		Segment{
 			MaxIndexBytes: 1024,
 		},
+		Raft{},
 	}
 
 	idx, err := newIndex(f, c)

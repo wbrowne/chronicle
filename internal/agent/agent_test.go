@@ -41,10 +41,10 @@ func TestAgent(t *testing.T) {
 	require.NoError(t, err)
 
 	// setup 3 node cluster
-	a1 := createAgent(t, serverTLSConfig, clientTLSConfig, "1", "")
+	a1 := createAgent(t, serverTLSConfig, clientTLSConfig, "0", "")
 	// two nodes join the first agent's cluster
-	a2 := createAgent(t, serverTLSConfig, clientTLSConfig, "2", a1.BindAddr.String())
-	a3 := createAgent(t, serverTLSConfig, clientTLSConfig, "3", a1.BindAddr.String())
+	a2 := createAgent(t, serverTLSConfig, clientTLSConfig, "1", a1.BindAddr.String())
+	a3 := createAgent(t, serverTLSConfig, clientTLSConfig, "2", a1.BindAddr.String())
 
 	// verify agent shutdown
 	defer func() {
@@ -109,7 +109,7 @@ func TestAgent(t *testing.T) {
 	require.Equal(t, got, want)
 }
 
-func createAgent(t *testing.T, serverTLSConfig, peerTLSConfig *tls.Config, id, agentAdr string) *agent.Agent {
+func createAgent(t *testing.T, serverTLSConfig, clientTLSConfig *tls.Config, id, agentAdr string) *agent.Agent {
 	ports, err := freeport.GetFreePorts(2) // sd and rpc
 	require.NoError(t, err)
 
@@ -120,6 +120,7 @@ func createAgent(t *testing.T, serverTLSConfig, peerTLSConfig *tls.Config, id, a
 
 	dataDir, err := ioutil.TempDir("", "agent_test")
 	require.NoError(t, err)
+	defer os.RemoveAll(dataDir)
 
 	var startJoinAddrs []string
 	if agentAdr != "" {
@@ -130,6 +131,7 @@ func createAgent(t *testing.T, serverTLSConfig, peerTLSConfig *tls.Config, id, a
 	}
 	a, err := agent.New(agent.Config{
 		NodeName:        id,
+		Bootstrap:       agentAdr == "",
 		StartJoinAddrs:  startJoinAddrs,
 		BindAddr:        bindAddr,
 		RPCPort:         ports[1],
@@ -137,7 +139,7 @@ func createAgent(t *testing.T, serverTLSConfig, peerTLSConfig *tls.Config, id, a
 		ACLModelFile:    sec.ACLModelFile,
 		ACLPolicyFile:   sec.ACLPolicyFile,
 		ServerTLSConfig: serverTLSConfig,
-		ClientTLSConfig: peerTLSConfig,
+		ClientTLSConfig: clientTLSConfig,
 	})
 	require.NoError(t, err)
 

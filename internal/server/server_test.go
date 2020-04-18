@@ -181,11 +181,13 @@ func testProduceConsumeStream(t *testing.T, client, _ api.LogClient, config *Con
 			&api.ConsumeRequest{Offset: 0},
 		)
 		require.NoError(t, err)
-		for _, record := range records {
+		for i, record := range records {
 			res, err := stream.Recv()
 			require.NoError(t, err)
-			require.Equal(t, res.Record.Value, record.Value)
-			require.Equal(t, res.Record.Offset, record.Offset)
+			require.Equal(t, res.Record, &api.Record{
+				Value:  record.Value,
+				Offset: uint64(i),
+			})
 		}
 	}
 }

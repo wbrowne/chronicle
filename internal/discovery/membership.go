@@ -24,7 +24,7 @@ type Config struct {
 type Handler interface {
 	Join(name, addr string) error
 
-	Leave(name, addr string) error
+	Leave(name string) error
 }
 
 func New(handler Handler, config Config) (*Membership, error) {
@@ -44,6 +44,7 @@ func (m *Membership) setupSerf() (err error) {
 
 	config.MemberlistConfig.BindAddr = m.BindAddr.IP.String()
 	config.MemberlistConfig.BindPort = m.BindAddr.Port
+	config.MemberlistConfig.SecretKey = nil
 	m.events = make(chan serf.Event)
 	config.EventCh = m.events
 	config.Tags = m.Tags
@@ -102,7 +103,6 @@ func (m *Membership) handleJoin(member serf.Member) {
 func (m *Membership) handleLeave(member serf.Member) {
 	if err := m.handler.Leave(
 		member.Name,
-		member.Tags["rpc_addr"],
 	); err != nil {
 		log.Printf(
 			"[ERROR] proglog: failed to leave: %s",
