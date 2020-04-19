@@ -46,7 +46,7 @@ func newIndex(f *os.File, c *Config) (*index, error) {
 	return idx, nil
 }
 
-// out represents the relative offset to the segments offset
+// off represents the relative offset to the segments offset
 func (i *index) Read(in int64) (off uint32, pos uint64, err error) {
 	if i.size == 0 { // empty index
 		return 0, 0, io.EOF
