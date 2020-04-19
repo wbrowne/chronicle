@@ -15,6 +15,12 @@ message Record {
     uint32 type = 4;
 }
 
+message Server {
+    string id = 1;
+    string rpc_addr = 2;
+    bool is_leader = 3;
+}
+
 service Log {
     rpc Produce (ProduceRequest) returns (ProduceResponse) {
     }
@@ -23,6 +29,8 @@ service Log {
     rpc ConsumeStream (ConsumeRequest) returns (stream ConsumeResponse) {
     }
     rpc ProduceStream (stream ProduceRequest) returns (stream ProduceResponse) {
+    }
+    rpc GetServers (GetServersRequest) returns (GetServersResponse) {
     }
 }
 
@@ -37,4 +45,11 @@ message ConsumeRequest {
 }
 message ConsumeResponse {
     Record record = 2;
+}
+
+message GetServersRequest {
+}
+
+message GetServersResponse {
+    repeated Server servers = 1;
 }

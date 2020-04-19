@@ -129,6 +129,7 @@ func (a *Agent) setupServer() error {
 			a.Config.ACLModelFile,
 			a.Config.ACLPolicyFile,
 		),
+		ServerInfo: a.log,
 	}
 	var opts []grpc.ServerOption
 	if a.Config.ServerTLSConfig != nil {
