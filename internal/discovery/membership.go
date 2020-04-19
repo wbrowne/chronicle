@@ -93,7 +93,7 @@ func (m *Membership) handleJoin(member serf.Member) {
 		member.Tags["rpc_addr"],
 	); err != nil {
 		log.Printf(
-			"[ERROR] proglog: failed to join: %s %s",
+			"[ERROR] chronicle: failed to join: %s %s",
 			member.Name,
 			member.Tags["rpc_addr"],
 		)
@@ -105,7 +105,7 @@ func (m *Membership) handleLeave(member serf.Member) {
 		member.Name,
 	); err != nil {
 		log.Printf(
-			"[ERROR] proglog: failed to leave: %s",
+			"[ERROR] chronicle: failed to leave: %s",
 			member.Name,
 		)
 	}

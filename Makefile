@@ -1,4 +1,4 @@
-CONFIG_PATH=${HOME}/dev/.chronicle
+export CONFIG_PATH=${HOME}/dev/.chronicle
 
 .PHONY: init
 init:
