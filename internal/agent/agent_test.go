@@ -19,6 +19,7 @@ import (
 	api "github.com/wbrowne/chronicle/api/v1"
 	"github.com/wbrowne/chronicle/internal/agent"
 	sec "github.com/wbrowne/chronicle/internal/conf"
+	"github.com/wbrowne/chronicle/internal/lb"
 )
 
 func TestAgent(t *testing.T) {
@@ -71,6 +72,9 @@ func TestAgent(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	// wait until data replication has finished
+	time.Sleep(3 * time.Second)
+
 	consumeResponse, err := leaderClient.Consume(
 		context.Background(),
 		&api.ConsumeRequest{
@@ -80,9 +84,6 @@ func TestAgent(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, consumeResponse.Record.Value, recordVal)
 	require.Equal(t, consumeResponse.Record.Offset, produceResponse.Offset)
-
-	// wait until data replication has finished
-	time.Sleep(3 * time.Second)
 
 	followerClient := client(t, a2, clientTLSConfig)
 	consumeResponse, err = followerClient.Consume(
@@ -150,7 +151,8 @@ func client(t *testing.T, agent *agent.Agent, tlsConfig *tls.Config) api.LogClie
 	tlsCreds := credentials.NewTLS(tlsConfig)
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(tlsCreds)}
 	conn, err := grpc.Dial(fmt.Sprintf(
-		"%s:%d",
+		"%s:///%s:%d",
+		lb.Name,
 		agent.Config.BindAddr.IP.String(),
 		agent.Config.RPCPort,
 	), opts...)
