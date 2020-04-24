@@ -68,7 +68,7 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	}
 
 	// append to log
-	_, post, err := s.store.Append(p)
+	_, pos, err := s.store.Append(p)
 	if err != nil {
 		return 0, err
 	}
@@ -76,7 +76,7 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	// add index entry
 	if err = s.index.Write(
 		uint32(s.nextOffset-uint64(s.baseOffset)), // index offsets are relative to base offset
-		post,
+		pos,
 	); err != nil {
 		return 0, err
 	}
