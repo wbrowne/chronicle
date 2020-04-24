@@ -45,6 +45,10 @@ jobs:
       
     - name: Test   
       run: |
+        echo $GOBIN
+        echo $GOPATH
+        echo $PATH
+        export PATH=$PATH:$(go env GOPATH)/bin
         make init
         make compile
         make gencert
