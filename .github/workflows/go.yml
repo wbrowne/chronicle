@@ -29,6 +29,10 @@ jobs:
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
         fi
+        
+    - name: Protoc action
+      uses: PxyUp/protoc-actions@v2.0.9
+      
 
     - name: Test   
       run: |
