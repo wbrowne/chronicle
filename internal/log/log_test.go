@@ -39,7 +39,8 @@ func testAppendRead(t *testing.T, log *Log) {
 
 	read, err := log.Read(off)
 	require.NoError(t, err)
-	// can't compare directly due to json field 'XXX_sizecache' being set
+
+	// can't compare directly due to extra json fields on the record struct
 	require.Equal(t, record.Value, read.Value)
 	require.Equal(t, record.Offset, read.Offset)
 }
