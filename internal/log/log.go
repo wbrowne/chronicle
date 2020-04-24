@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -89,6 +90,7 @@ func (l *Log) Append(record *api.Record) (uint64, error) {
 		return 0, err
 	}
 	if l.activeSegment.IsMaxed() {
+		fmt.Printf("Reached max for active segment. Creating new @ offset %d\n (store size: %d)", off+1, l.activeSegment.store.size)
 		err = l.newSegment(off + 1)
 	}
 

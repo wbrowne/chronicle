@@ -41,7 +41,6 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	fmt.Printf("Appending %d bytes (0x%x)\n", uint64(len(p)), string(p))
 	if err := binary.Write(s.buf, enc, uint64(len(p))); err != nil {
 		return 0, 0, err
 	}
@@ -55,6 +54,9 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 	pos = s.size
 	s.size += bytesWritten
 
+	fmt.Printf("Appending %d bytes (total %d) (0x%x) @ pos %d\n", w, bytesWritten, string(p), pos)
+	fmt.Printf("Store size (after) = %d\n", s.size)
+
 	return bytesWritten, pos, nil
 }
 
@@ -67,17 +69,19 @@ func (s *store) ReadAt(pos uint64) ([]byte, error) {
 		return nil, err
 	}
 
+	// how many bytes we have to read to get the whole record
 	size := make([]byte, lenWidth)
-	fmt.Printf("Reading %d bytes (0x%x)\n", len(size), string(size))
 	if _, err := s.File.ReadAt(size, int64(pos)); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Determining record length: %d\n", enc.Uint64(size))
 
+	//  fetch and return the record
 	b := make([]byte, enc.Uint64(size))
-	fmt.Printf("Reading %d bytes (0x%x)\n", len(b), string(b))
 	if _, err := s.File.ReadAt(b, int64(pos+lenWidth)); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Reading %d bytes (0x%x)\n", len(b), string(b))
 
 	return b, nil
 }
