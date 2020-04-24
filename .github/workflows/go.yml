@@ -29,8 +29,8 @@ jobs:
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
         fi
-        
-    - name: Fetch protoc 
+
+    - name: Fetch protoc
       run: |
         sudo apt-get install autoconf automake libtool curl make g++ unzip
         git clone https://github.com/protocolbuffers/protobuf.git
@@ -42,13 +42,17 @@ jobs:
         make check
         sudo make install
         sudo ldconfig # refresh shared library cache.
-      
-    - name: Test   
+
+  - name: Fetch protoc-gen-go
+    run: |
+      go get -u github.com/golang/protobuf/protoc-gen-go
+
+  - name: Test
       run: |
-        echo $GOBIN
-        echo $GOPATH
-        echo $PATH
-        export PATH=$PATH:$(go env GOPATH)/bin
+        export GOROOT=~/go
+        export GOPATH=$HOME/go
+        export GOBIN=$GOPATH/bin
+        export PATH=$PATH:$GOROOT:$GOPATH:$GOBIN
         make init
         make compile
         make gencert
