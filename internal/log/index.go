@@ -21,7 +21,6 @@ type index struct {
 }
 
 func newIndex(f *os.File, c *Config) (*index, error) {
-	fmt.Println("New index created")
 	fi, err := f.Stat()
 	if err != nil {
 		return nil, err
@@ -43,6 +42,7 @@ func newIndex(f *os.File, c *Config) (*index, error) {
 		return nil, err
 	}
 
+	fmt.Println("New index created")
 	return idx, nil
 }
 
@@ -78,6 +78,7 @@ func (i *index) Write(off uint32, pos uint64) error {
 		return io.EOF
 	}
 
+	fmt.Printf("Creating index entry @ off %d, pos %d\n", off, pos)
 	enc.PutUint32(i.mmap[i.size:i.size+offWidth], off)
 	enc.PutUint64(i.mmap[i.size+offWidth:i.size+entWidth], pos)
 	i.size += uint64(entWidth)

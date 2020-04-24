@@ -55,7 +55,7 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 	s.size += bytesWritten
 
 	fmt.Printf("Appending %d bytes (total %d) (0x%x) @ pos %d\n", w, bytesWritten, string(p), pos)
-	fmt.Printf("Store size (after) = %d\n", s.size)
+	fmt.Printf("Store size = %d\n", s.size)
 
 	return bytesWritten, pos, nil
 }
