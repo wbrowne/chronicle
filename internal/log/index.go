@@ -21,7 +21,7 @@ type index struct {
 }
 
 func newIndex(f *os.File, c *Config) (*index, error) {
-	fmt.Println("### New index created ###")
+	fmt.Println("New index created")
 	fi, err := f.Stat()
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func (i *index) Read(in int64) (off uint32, pos uint64, err error) {
 	}
 
 	if in == -1 {
-		fmt.Printf("Current size = %d\n", i.size)
+		fmt.Printf("Current index size = %d\n", i.size)
 		off = uint32((i.size / entWidth) - 1)
 	} else {
 		off = uint32(in)
