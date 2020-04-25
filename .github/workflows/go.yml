@@ -34,12 +34,10 @@ jobs:
       run: |
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protoc-3.11.4-linux-x86_64.zip
         sudo unzip protoc-3.11.4-linux-x86_64.zip -d /usr/local/protobuf
-        PATH=$PATH:/usr/local/protobuf/bin
 
     - name: Fetch protoc-gen-go
       run: |
         go get -u github.com/gogo/protobuf/protoc-gen-gogo
-        PATH=$PATH:~/go/bin
 
     - name: Get Cloudflare cert CLIs
       run: |
@@ -48,6 +46,8 @@ jobs:
 
     - name: Test
       run: |
+        PATH=$PATH:/usr/local/protobuf/bin # setting PATH earlier is lost (even with EXPORT)
+        PATH=$PATH:~/go/bin
         make init
         make compile
         make gencert
