@@ -47,6 +47,11 @@ jobs:
       run: |
         go get -u github.com/gogo/protobuf/protoc-gen-gogo
 
+    - name: Get Cloudflare cert CLIs
+      run: |
+        go get github.com/cloudflare/cfssl/cmd/cfssl@v1.4.1
+        go get github.com/cloudflare/cfssl/cmd/cfssljson@v1.4.1
+
     - name: Test
       run: |
         export GOROOT=~/go
