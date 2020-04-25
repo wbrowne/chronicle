@@ -2,6 +2,9 @@
   <img src="images/logo.png" width="600">
 </p>
 
+
+[![Actions Status](https://github.com/wbrowne/chronicle/workflows/Go/badge.svg)](https://github.com/wbrowne/chronicle/actions)
+
 Building a distributed log based on Travis Jeffery's [Distributed Services with Go](https://pragprog.com/book/tjgo/distributed-services-with-go)
 
 ## Overview
