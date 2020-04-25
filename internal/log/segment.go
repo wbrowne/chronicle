@@ -67,6 +67,8 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 		return 0, err
 	}
 
+	fmt.Printf("Writing record value: \"%s\" (%d bytes)\n", record.Value, len(record.Value))
+
 	// append to log
 	_, pos, err := s.store.Append(p)
 	if err != nil {
@@ -82,6 +84,8 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 	}
 	cur := s.nextOffset
 	s.nextOffset++
+
+	fmt.Printf("Segment base offset: %d, next offset: %d\n", s.baseOffset, s.nextOffset)
 
 	return cur, nil
 }
