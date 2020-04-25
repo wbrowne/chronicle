@@ -32,16 +32,9 @@ jobs:
 
     - name: Fetch protoc
       run: |
-        sudo apt-get install autoconf automake libtool curl make g++ unzip
-        git clone https://github.com/protocolbuffers/protobuf.git
-        cd protobuf
-        git submodule update --init --recursive
-        ./autogen.sh
-        ./configure
-        make
-        make check
-        sudo make install
-        sudo ldconfig # refresh shared library cache.
+        wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protoc-3.11.4-linux-x86_64.zip
+        unzip protoc-3.11.4-linux-x86_64.zip -d /usr/local/protobuf
+        export PATH=$PATH:/usr/local/protobuf/bin
 
     - name: Fetch protoc-gen-go
       run: |
@@ -54,10 +47,6 @@ jobs:
 
     - name: Test
       run: |
-        export GOROOT=~/go
-        export GOPATH=$HOME/go
-        export GOBIN=$GOPATH/bin
-        export PATH=$PATH:$GOROOT:$GOPATH:$GOBIN
         make init
         make compile
         make gencert
