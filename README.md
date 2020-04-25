@@ -1,4 +1,6 @@
-![chronicle logo](images/logo.png)
+<p align="center">
+  <img src="images/logo.png" width="600">
+</p>
 
 Building a distributed log based on Travis Jeffery's [Distributed Services with Go](https://pragprog.com/book/tjgo/distributed-services-with-go)
 
