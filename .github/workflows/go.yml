@@ -47,6 +47,7 @@ jobs:
     - name: Test
       run: |
         PATH=$PATH:/usr/local/protobuf/bin
+        PATH=$PATH:~/go/bin
         echo $PATH
 
         make init
