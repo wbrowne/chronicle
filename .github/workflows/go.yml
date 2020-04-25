@@ -35,6 +35,7 @@ jobs:
         wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protoc-3.11.4-linux-x86_64.zip
         sudo unzip protoc-3.11.4-linux-x86_64.zip -d /usr/local/protobuf
         export PATH=$PATH:/usr/local/protobuf/bin
+        echo $PATH
 
     - name: Fetch protoc-gen-go
       run: |
@@ -47,6 +48,8 @@ jobs:
 
     - name: Test
       run: |
+        echo $PATH
+        /usr/local/protobuf/bin/protoc --version
         make init
         make compile
         make gencert
