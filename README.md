@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo.png" width="600">
+  <img src="images/logo-2.png" width="600">
 </p>
 
 [![Actions Status](https://github.com/wbrowne/chronicle/workflows/Go/badge.svg)](https://github.com/wbrowne/chronicle/actions)
