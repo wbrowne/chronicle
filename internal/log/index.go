@@ -61,14 +61,14 @@ func (i *index) Read(in int64) (off uint32, pos uint64, err error) {
 
 	pos = uint64(off) * entWidth
 
-	fmt.Printf("Reading @ offset %d with position %d\n", off, pos)
-
 	if i.size < pos+entWidth {
 		return 0, 0, io.EOF
 	}
 
 	off = enc.Uint32(i.mmap[pos : pos+offWidth])
 	pos = enc.Uint64(i.mmap[pos+offWidth : pos+entWidth])
+
+	fmt.Printf("[r][index] Reading @ offset %d with position %d\n", off, pos)
 
 	return off, pos, nil
 }
@@ -78,7 +78,7 @@ func (i *index) Write(off uint32, pos uint64) error {
 		return io.EOF
 	}
 
-	fmt.Printf("Creating index entry @ off %d, pos %d\n", off, pos)
+	fmt.Printf("[w][index] Creating index entry: {offset: %d, position: %d}\n", off, pos)
 	enc.PutUint32(i.mmap[i.size:i.size+offWidth], off)
 	enc.PutUint64(i.mmap[i.size+offWidth:i.size+entWidth], pos)
 	i.size += uint64(entWidth)
@@ -95,6 +95,8 @@ func (i *index) Close() error {
 	if err := i.mmap.Sync(gommap.MS_SYNC); err != nil {
 		return err
 	}
+
+	fmt.Println("Flushing index to disk")
 
 	// ensure flushed to disk
 	if err := i.file.Sync(); err != nil {

@@ -119,6 +119,29 @@ func testProduceConsume(t *testing.T, client, _ api.LogClient, config *Config) {
 	require.NoError(t, err)
 	require.Equal(t, want.Value, consume.Record.Value)
 	require.Equal(t, want.Offset, consume.Record.Offset)
+
+	// and once more
+
+	want = &api.Record{
+		Value: []byte("fizzbuzz"),
+		Offset: 1,
+	}
+
+	produce, err = client.Produce(
+		context.Background(),
+		&api.ProduceRequest{
+			Record: want,
+		},
+	)
+	require.NoError(t, err)
+
+	consume, err = client.Consume(ctx, &api.ConsumeRequest{
+		Offset: produce.Offset,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, want.Value, consume.Record.Value)
+	require.Equal(t, want.Offset, consume.Record.Offset)
 }
 
 func testConsumePastBoundary(t *testing.T, client, _ api.LogClient, config *Config) {

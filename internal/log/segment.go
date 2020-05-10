@@ -67,7 +67,7 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 		return 0, err
 	}
 
-	fmt.Printf("Writing record value: \"%s\" (%d bytes)\n", record.Value, len(record.Value))
+	fmt.Printf("[w][segment] Writing record: {value:\"%s\", offset:%d}\n", record.Value, record.Offset)
 
 	// append to log
 	_, pos, err := s.store.Append(p)
@@ -101,6 +101,8 @@ func (s *segment) Read(off uint64) (*api.Record, error) {
 	}
 	record := &api.Record{}
 	err = proto.Unmarshal(p, record)
+
+	fmt.Printf("[r][segment] Returning record: {value:\"%s\", offset:%d}\n", record.Value, record.Offset)
 	return record, err
 }
 
