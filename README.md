@@ -31,4 +31,6 @@ Building a distributed log based on Travis Jeffery's [Distributed Services with 
 - *Segment* — the abstraction that ties a store and an index together
 - *Log* — the abstraction that ties all the segments together
 
-More to come
+<img src="images/overview.png">
+
+Check out the [drawio](images/overview.drawio) which has more details via hover tooltips
